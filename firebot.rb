@@ -23,33 +23,49 @@ receive do |session, event|
 end
 
 def search_google(query)
-  html = Net::HTTP.get(URI.parse("http://www.google.com/search?q=#{CGI.escape(query)}"))
-  doc = Hpricot(html)
-  a = doc.search("//h3/a").first
-  title = page_title(CGI.unescape(a.attributes['href'].strip)) #CGI.unescape(a.inner_html.strip.gsub(/<(.*?)>/, ''))
-  href = tiny_url(CGI.unescape(a.attributes['href'].strip))
+  title = ""
+  href = ""
+  begin
+    html = Net::HTTP.get(URI.parse("http://www.google.com/search?q=#{CGI.escape(query)}"))
+    doc = Hpricot(html)
+    a = doc.search("//h3/a").first
+    title = page_title(CGI.unescape(a.attributes['href'].strip)) #CGI.unescape(a.inner_html.strip.gsub(/<(.*?)>/, ''))
+    href = tiny_url(CGI.unescape(a.attributes['href'].strip))
+  rescue
+  end
   ">> #{href} <<  [ #{title} ]"
 end
 
 def tiny_url(url)
-  html = Net::HTTP.get(URI.parse("http://tinyurl.com/create.php?url=#{CGI.escape(url)}"))
-  doc = Hpricot(html)
-  a = doc.search("//blockquote/small/a").first
-  CGI.unescape(a.attributes['href'].strip)
+  href = ""
+  begin
+    html = Net::HTTP.get(URI.parse("http://tinyurl.com/create.php?url=#{CGI.escape(url)}"))
+    doc = Hpricot(html)
+    a = doc.search("//blockquote/small/a").first
+    href = a.attributes['href'].strip
+  rescue
+  end
+  CGI.unescape(href)
 end
 
 def page_title(url,ssl=false)
-  uri = URI.parse(url)
-  http = Net::HTTP.new(uri.host, uri.port)
-  if ssl
-    http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  end
-  request = Net::HTTP::Get.new(uri.request_uri)
-  response = http.request(request)
-  html = response.body
+  title = ""
+  begin
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    if ssl
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
+    request = Net::HTTP::Get.new(uri.request_uri)
+    response = http.request(request)
+    html = response.body
 
-  doc = Hpricot(html)
-  a = doc.search("//head/title").first
-  (a.inner_html.nil? ? "No Title Available" : CGI.unescape(a.inner_html.gsub(/<(.*?)>/, '').strip))
+    doc = Hpricot(html)
+    a = doc.search("//head/title").first
+    title = 
+    title = a.inner_html.gsub(/<(.*?)>/, '').strip
+  rescue
+  end
+  CGI.unescape(title)
 end

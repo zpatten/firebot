@@ -6,35 +6,36 @@ require 'uri'
 require 'pp'
 
 MY_USER_ID = 991971
-
 BAD_EVAL = [/`(.*)`/, /exec/, /system/]
 
 receive do |session, event|
-  #next if event.user_id == MY_USER_ID
-
-  # someone wants to eval ruby code
-  if event.text? && event.body.strip =~ /^!eval (.*)$/
-    ev = $1
-    if BAD_EVAL.any?{|e| ev =~ e}
-      event.room.say! "Tsk! Tsk!"
-    else
-      event.room.paste! "Eval result:\n" + eval(ev).to_s
+  begin
+    # someone wants to eval ruby code
+    if event.text? && event.body.strip =~ /^!eval (.*)$/
+      ev = $1
+      if BAD_EVAL.any?{|e| ev =~ e}
+        event.room.say! "Tsk! Tsk!"
+      else
+        event.room.paste! "Eval result:\n" + eval(ev).to_s
+      end
     end
-  end
 
-  # someone wants to search google
-  if event.text? && event.body.strip =~ /^!google (.*)$/
-    event.room.say! search_google($1)
-  end
+    # someone wants to search google
+    if event.text? && event.body.strip =~ /^!google (.*)$/
+      event.room.say! search_google($1)
+    end
 
-  # someone posted a url; lets do some homework on it
-  if event.text? && event.body.strip =~ /^http(|s):\/\/(.*)$/
-    event.room.say! ">> #{tiny_url("http#{$1}://#{$2}")} <<  [ #{page_title("http#{$1}://#{$2}", ($1 == 's'))} ]"
-  end
+    # someone posted a url; lets do some homework on it
+    if event.text? && event.body.strip =~ /^http(|s):\/\/(.*)$/
+      event.room.say! ">> #{tiny_url("http#{$1}://#{$2}")} <<  [ #{page_title("http#{$1}://#{$2}", ($1 == 's'))} ]"
+    end
 
-  # display some hopefully helpful text
-  if event.text? && event.body.strip =~ /^!help$/
-    event.room.say! "Hello I'm your friendly Campfire bot! -- I currently accept these commands: !help, !google, !eval"
+    # display some hopefully helpful text
+    if event.text? && event.body.strip =~ /^!help$/
+      event.room.say! "Hello I'm your friendly Campfire bot! -- I currently accept these commands: !help, !google, !eval"
+    end
+  rescue Exception => e
+    event.room.paste! "Exception:\n" + e.inspect + "\n" + e.message
   end
 end
 
@@ -45,7 +46,8 @@ def search_google(query)
     html = Net::HTTP.get(URI.parse("http://www.google.com/search?q=#{CGI.escape(query)}"))
     doc = Hpricot(html)
     a = doc.search("//h3/a").first
-    title = page_title(CGI.unescape(a.attributes['href'].strip)) #CGI.unescape(a.inner_html.strip.gsub(/<(.*?)>/, ''))
+    #title = page_title(CGI.unescape(a.attributes['href'].strip))
+    title = CGI.unescape(a.inner_html.strip.gsub(/<(.*?)>/, ''))
     href = tiny_url(CGI.unescape(a.attributes['href'].strip))
   rescue
   end

@@ -1,1 +1,6 @@
-This file was created by JetBrains RubyMine 3.2.3 for binding GitHub repository
+This is built on Firetower; an interface to the Campfire API.
+https://github.com/avdi/firetower
+
+Drop the code in firebot.rb into the end of your ~/firetower/firetower.conf file.
+Be sure to comment out the "use NotifyPlugin" line in the firetower.conf file.
+Tweak values where needed.

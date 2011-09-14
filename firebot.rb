@@ -1,9 +1,25 @@
+require 'rubygems'
+require 'hpricot'
+
+require 'net/https'
+require 'uri'
+require 'pp'
+
+MY_USER_ID = 991971
+
+BAD_EVAL = [/`(.*)`/, /exec/, /system/]
+
 receive do |session, event|
   #next if event.user_id == MY_USER_ID
 
   # someone wants to eval ruby code
   if event.text? && event.body.strip =~ /^!eval (.*)$/
-    event.room.paste! "Eval result:\n" + eval($1).to_s
+    ev = $1
+    if BAD_EVAL.any?{|e| ev =~ e}
+      event.room.say! "Tsk! Tsk!"
+    else
+      event.room.paste! "Eval result:\n" + eval(ev).to_s
+    end
   end
 
   # someone wants to search google

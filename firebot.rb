@@ -9,6 +9,7 @@ MY_USER_ID = 991971
 BAD_EVAL = [/`(.*)`/, /exec/, /system/]
 
 receive do |session, event|
+
   begin
     # someone wants to eval ruby code
     if event.text? && event.body.strip =~ /^!eval (.*)$/
@@ -16,7 +17,8 @@ receive do |session, event|
       if BAD_EVAL.any?{|e| ev =~ e}
         event.room.say! "Tsk! Tsk!"
       else
-        event.room.paste! "Eval result:\n" + eval(ev).to_s
+#event.room.paste! "Eval result:\n" + instance_eval(ev).to_s
+        event.room.paste! "Eval result:\n" + ev.to_s
       end
     end
 
